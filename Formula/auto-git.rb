@@ -5,15 +5,41 @@ class AutoGit < Formula
   desc "Auto sync git repos on file changes with quiet period"
   homepage "https://github.com/pig98/auto-git"
   url "https://github.com/pig98/auto-git/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "2bbbaff2ce5c993f21942a66f709dd8b138d050b37b33301a9dd1b56f6cff6ed"
+  sha256 "9a53f61fd13a2f3d75045552fbe6dde92a9627ab08ce43619982d1ace6dc86a7"
   license "MIT"
   version "0.1.0"
 
   depends_on "go" => :build
 
+  # Git commit ID (will be updated by GitHub Actions workflow)
+  GIT_COMMIT = "75bc16a"
+
   def install
+    # Use the commit ID from the constant (set by workflow)
+    # Fallback to version tag if not set
+    git_commit = GIT_COMMIT
+    if git_commit == "PLACEHOLDER_COMMIT" || git_commit.empty?
+      # Fallback: try to extract from URL or use version
+      if url.to_s.include?("/v")
+        tag_match = url.to_s.match(%r{/v([^/]+)\.tar\.gz})
+        git_commit = "v#{tag_match[1]}" if tag_match
+      end
+      git_commit = "v#{version}" if git_commit.empty? || git_commit == "PLACEHOLDER_COMMIT"
+    end
+
+    # Build time
+    build_time = Time.now.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Build with version information
+    ldflags = [
+      "-s", "-w",
+      "-X main.version=#{version}",
+      "-X main.buildTime=#{build_time}",
+      "-X main.gitCommit=#{git_commit}"
+    ].join(" ")
+
     system "go", "build",
-           *std_go_args(output: bin/"auto-git", ldflags: "-s -w"),
+           *std_go_args(output: bin/"auto-git", ldflags: ldflags),
            "./"
   end
 

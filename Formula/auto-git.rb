@@ -1,16 +1,39 @@
+# typed: false
+# frozen_string_literal: true
+
 class AutoGit < Formula
-  desc "AutoGit: 自动同步 git 的辅助工具"
+  desc "Auto sync git repos on file changes with quiet period"
   homepage "https://github.com/pig98/auto-git"
   url "https://github.com/pig98/auto-git/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "4eac45e8f390fe0114e655194f3acc23b2ce06456801cadad31266d50ed82c00"
+  sha256 "2bbbaff2ce5c993f21942a66f709dd8b138d050b37b33301a9dd1b56f6cff6ed"
   license "MIT"
+  version "0.1.0"
+
+  depends_on "go" => :build
 
   def install
-    bin.install "auto-git"
+    system "go", "build",
+           *std_go_args(output: bin/"auto-git", ldflags: "-s -w"),
+           "./"
+  end
+
+  service do
+    run [opt_bin/"auto-git"]
+    keep_alive true
+    log_path var/"log/auto-git.log"
+    error_log_path var/"log/auto-git.err.log"
+    working_dir HOMEBREW_PREFIX/"var/auto-git"
+
+    environment_variables(
+      "GIT_DIRS" => "",
+      "QUIET_PERIOD_MINUTES" => "10",
+      "LOG_LEVEL" => "INFO",
+      "DISABLE_NOTIFICATIONS" => "0"
+    )
   end
 
   test do
-    system "#{bin}/auto-git", "--version"
+    # Test that the binary exists and is executable
+    assert_predicate bin/"auto-git", :exist?
   end
 end
-

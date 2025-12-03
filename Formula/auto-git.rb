@@ -5,14 +5,14 @@ class AutoGit < Formula
   desc "Auto sync git repos on file changes with quiet period"
   homepage "https://github.com/pig98/auto-git"
   url "https://github.com/pig98/auto-git/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "9a53f61fd13a2f3d75045552fbe6dde92a9627ab08ce43619982d1ace6dc86a7"
+  sha256 "e76749d17474e3f5578cadfb589a416c7706a1b48197683e573153b8c74f0293"
   license "MIT"
   version "0.1.0"
 
   depends_on "go" => :build
 
   # Git commit ID (will be updated by GitHub Actions workflow)
-  GIT_COMMIT = "75bc16a"
+  GIT_COMMIT = "b3762c6"
 
   def install
     # Use the commit ID from the constant (set by workflow)
@@ -41,6 +41,9 @@ class AutoGit < Formula
     system "go", "build",
            *std_go_args(output: bin/"auto-git", ldflags: ldflags),
            "./"
+    
+    # Create working directory for service
+    (var/"auto-git").mkpath
   end
 
   service do
